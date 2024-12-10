@@ -7,7 +7,8 @@ import java.awt.*;
 
 public class RegisterView extends JFrame {
 
-    private JTextField txtUsername, txtPhoneNumber, txtAddress;
+	private static final long serialVersionUID = 1L;
+	private JTextField txtUsername, txtPhoneNumber, txtAddress;
     private JPasswordField txtPassword;
     private JLabel lblMessage;
     private JRadioButton rbBuyer, rbSeller;

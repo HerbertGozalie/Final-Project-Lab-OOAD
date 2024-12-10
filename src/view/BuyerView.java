@@ -1,91 +1,74 @@
 package view;
 
 import controller.ItemController;
+import controller.TransactionController;
 import controller.WishlistController;
 import model.Item;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 public class BuyerView extends JFrame {
-    // UI Components
-    private JTable tblItems, tblWishlist;
-    private JButton btnAddToWishlist, btnPurchase, btnViewWishlist;
-    private JLabel lblMessage;
-    private int userId; // User ID of the logged-in user
 
-    // Constructor
-    public BuyerView(int userID) {
-    	this.userId = userId;
-        // Set up JFrame
+	private static final long serialVersionUID = 1L;
+	private JTable tblItems;
+    private JButton btnAddToWishlist, btnPurchase, btnViewWishlist, btnPurchaseHistory, btnMakeOffer;
+    private JLabel lblMessage;
+    private int userId;
+
+    public BuyerView(int userId) {
+        this.userId = userId;
         setTitle("Buyer - Browse and Purchase Items");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Item Table
         tblItems = new JTable();
         JScrollPane itemScrollPane = new JScrollPane(tblItems);
         itemScrollPane.setBorder(BorderFactory.createTitledBorder("Available Items"));
         add(itemScrollPane, BorderLayout.CENTER);
 
-        // Wishlist Table
-        tblWishlist = new JTable();
-        JScrollPane wishlistScrollPane = new JScrollPane(tblWishlist);
-        wishlistScrollPane.setBorder(BorderFactory.createTitledBorder("Wishlist"));
-        wishlistScrollPane.setPreferredSize(new Dimension(800, 200));
-        add(wishlistScrollPane, BorderLayout.SOUTH);
-
-        // Message Label
         lblMessage = new JLabel("", SwingConstants.CENTER);
         add(lblMessage, BorderLayout.NORTH);
 
-        // Action Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        btnAddToWishlist = new JButton("Add to Wishlist");
         btnPurchase = new JButton("Purchase Item");
+        btnAddToWishlist = new JButton("Add to Wishlist");
         btnViewWishlist = new JButton("View Wishlist");
+        btnPurchaseHistory = new JButton("View Purchase History");
+        btnMakeOffer = new JButton("Make Offer");
 
-        buttonPanel.add(btnAddToWishlist);
         buttonPanel.add(btnPurchase);
+        buttonPanel.add(btnAddToWishlist);
         buttonPanel.add(btnViewWishlist);
+        buttonPanel.add(btnPurchaseHistory);
+        buttonPanel.add(btnMakeOffer);
         add(buttonPanel, BorderLayout.SOUTH);
+        
+        JButton btnLogout = new JButton("Logout");
+        btnLogout.addActionListener(this::handleLogout);
+        buttonPanel.add(btnLogout);
 
-        // Action Listeners
-        btnAddToWishlist.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleAddToWishlist();
-            }
+        btnPurchase.addActionListener(e -> handlePurchase());
+        btnAddToWishlist.addActionListener(e -> handleAddToWishlist());
+        btnViewWishlist.addActionListener(e -> {
+            new WishlistView(userId);
+            dispose();
         });
-
-        btnPurchase.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handlePurchase();
-            }
+        btnPurchaseHistory.addActionListener(e -> {
+            new PurchaseHistoryView(userId);
+            dispose();
         });
+        btnMakeOffer.addActionListener(e -> handleMakeOffer());
 
-        btnViewWishlist.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadWishlist();
-            }
-        });
-
-        // Load Available Items
         loadAvailableItems();
-
         setVisible(true);
     }
-
-    // Load available items into the table
     private void loadAvailableItems() {
-        List<Item> items = ItemController.getAvailableItems();
+        List<Item> items = ItemController.getApprovedItems();
         if (items != null && !items.isEmpty()) {
             String[][] data = new String[items.size()][5];
             for (int i = 0; i < items.size(); i++) {
@@ -106,29 +89,6 @@ public class BuyerView extends JFrame {
         }
     }
 
-
-    // Load wishlist into the table
-    private void loadWishlist() {
-        List<Item> wishlist = WishlistController.getWishlistItems(userId); // Pass userId here
-        if (wishlist != null && !wishlist.isEmpty()) {
-            String[][] data = new String[wishlist.size()][5];
-            for (int i = 0; i < wishlist.size(); i++) {
-                Item item = wishlist.get(i);
-                data[i][0] = String.valueOf(item.getId());
-                data[i][1] = item.getName();
-                data[i][2] = item.getCategory();
-                data[i][3] = item.getSize();
-                data[i][4] = String.valueOf(item.getPrice());
-            }
-            String[] columnNames = {"ID", "Name", "Category", "Size", "Price"};
-            tblWishlist.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
-        } else {
-            lblMessage.setText("Your wishlist is empty.");
-            lblMessage.setForeground(Color.RED);
-        }
-    }
-
-    // Handle adding an item to the wishlist
     private void handleAddToWishlist() {
         int selectedRow = tblItems.getSelectedRow();
         if (selectedRow == -1) {
@@ -138,46 +98,17 @@ public class BuyerView extends JFrame {
         }
 
         try {
-            int itemId = Integer.parseInt(tblItems.getValueAt(selectedRow, 0).toString()); // Ensure parsing to String first
-            boolean isAdded = WishlistController.addItemToWishlist(userId, itemId); // Pass userId
+            int itemId = Integer.parseInt(tblItems.getValueAt(selectedRow, 0).toString());
+            String result = WishlistController.addItemToWishlist(userId, itemId);
 
-            if (isAdded) {
-                lblMessage.setText("Item added to wishlist!");
-                lblMessage.setForeground(Color.GREEN);
-                loadWishlist();
-            } else {
-                lblMessage.setText("Failed to add item to wishlist.");
-                lblMessage.setForeground(Color.RED);
-            }
+            lblMessage.setText(result);
+            lblMessage.setForeground(result.contains("successfully") ? Color.GREEN : Color.RED);
         } catch (NumberFormatException e) {
             lblMessage.setText("Invalid item ID.");
             lblMessage.setForeground(Color.RED);
         }
     }
 
-    
-    private void handleRemoveFromWishlist() {
-        int selectedRow = tblWishlist.getSelectedRow();
-        if (selectedRow == -1) {
-            lblMessage.setText("Select an item to remove from wishlist.");
-            lblMessage.setForeground(Color.RED);
-            return;
-        }
-
-        int itemId = Integer.parseInt((String) tblWishlist.getValueAt(selectedRow, 0));
-        boolean isRemoved = WishlistController.removeItemFromWishlist(userId, itemId); // Pass userId
-
-        if (isRemoved) {
-            lblMessage.setText("Item removed from wishlist.");
-            lblMessage.setForeground(Color.GREEN);
-            loadWishlist();
-        } else {
-            lblMessage.setText("Failed to remove item from wishlist.");
-            lblMessage.setForeground(Color.RED);
-        }
-    }
-
-    // Handle purchasing an item
     private void handlePurchase() {
         int selectedRow = tblItems.getSelectedRow();
         if (selectedRow == -1) {
@@ -188,25 +119,77 @@ public class BuyerView extends JFrame {
 
         try {
             int itemId = Integer.parseInt(tblItems.getValueAt(selectedRow, 0).toString());
-            boolean isPurchased = ItemController.purchaseItem(itemId, userId); // Pass userId as buyerId
+            double price = Double.parseDouble(tblItems.getValueAt(selectedRow, 4).toString());
+            String result = TransactionController.createTransaction(userId, itemId, price, "Completed");
 
-            if (isPurchased) {
-                lblMessage.setText("Purchase successful!");
-                lblMessage.setForeground(Color.GREEN);
-                loadAvailableItems(); // Refresh the available items
-                loadWishlist(); // Refresh the wishlist
-            } else {
-                lblMessage.setText("Failed to purchase item. It may no longer be available.");
-                lblMessage.setForeground(Color.RED);
-            }
+            lblMessage.setText(result);
+            lblMessage.setForeground(result.contains("successfully") ? Color.GREEN : Color.RED);
+            loadAvailableItems();
         } catch (NumberFormatException e) {
-            lblMessage.setText("Invalid item ID.");
+            lblMessage.setText("Invalid item ID or price.");
             lblMessage.setForeground(Color.RED);
         }
     }
+    
+    private void handleMakeOffer() {
+        int selectedRow = tblItems.getSelectedRow();
+        if (selectedRow == -1) {
+            lblMessage.setText("Select an item to make an offer.");
+            lblMessage.setForeground(Color.RED);
+            return;
+        }
 
+        int itemId = Integer.parseInt(tblItems.getValueAt(selectedRow, 0).toString());
+        double currentPrice = Double.parseDouble(tblItems.getValueAt(selectedRow, 4).toString());
 
-    // Main method for testing
+        JDialog offerDialog = new JDialog(this, "Make an Offer", true);
+        offerDialog.setSize(400, 200);
+        offerDialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+        JLabel lblCurrentPrice = new JLabel("Current Price: " + currentPrice);
+        JLabel lblOfferPrice = new JLabel("Your Offer:");
+        JTextField txtOfferPrice = new JTextField();
+        JButton btnSubmit = new JButton("Submit");
+        JButton btnCancel = new JButton("Cancel");
+
+        panel.add(lblCurrentPrice);
+        panel.add(new JLabel());
+        panel.add(lblOfferPrice);
+        panel.add(txtOfferPrice);
+        panel.add(btnSubmit);
+        panel.add(btnCancel);
+
+        offerDialog.add(panel);
+
+        btnSubmit.addActionListener(e -> {
+            String offerInput = txtOfferPrice.getText();
+            try {
+                double offerPrice = Double.parseDouble(offerInput);
+
+                String result = TransactionController.submitValidatedOffer(userId, itemId, offerPrice);
+                lblMessage.setText(result);
+                lblMessage.setForeground(result.contains("successfully") ? Color.GREEN : Color.RED);
+
+                if (result.contains("successfully")) {
+                    offerDialog.dispose();
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(offerDialog, "Invalid price format.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        btnCancel.addActionListener(e -> offerDialog.dispose());
+
+        offerDialog.setVisible(true);
+    }
+    
+    private void handleLogout(ActionEvent e) {
+        
+        new LoginView();
+        dispose(); 
+    }
+
     public static void main(String[] args) {
         new BuyerView(1);
     }

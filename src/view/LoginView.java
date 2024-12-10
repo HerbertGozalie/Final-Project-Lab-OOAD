@@ -8,7 +8,8 @@ import java.awt.*;
 
 public class LoginView extends JFrame {
 
-    private JTextField txtUsername;
+	private static final long serialVersionUID = 1L;
+	private JTextField txtUsername;
     private JPasswordField txtPassword;
     private JLabel lblMessage;
 
@@ -67,11 +68,11 @@ public class LoginView extends JFrame {
                 dispose();
             } else if (user.getRole().equals("Seller")) {
                 JOptionPane.showMessageDialog(this, "Login successful! Redirecting to ItemView...");
-                new ItemView();
+                new SellerView();
                 dispose();
-            } else if (user.getRole().equals("Admin")) { // If admin exists in your roles
+            } else if (user.getRole().equals("Admin")) {
                 JOptionPane.showMessageDialog(this, "Login successful! Redirecting to AdminView...");
-                new AdminView(); // Redirect to AdminView
+                new AdminView();
                 dispose();
             } else {
                 lblMessage.setText("Invalid role.");

@@ -5,14 +5,13 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseConnection {
-    // Database credentials
-    private static final String USERNAME = "root"; // Default username for XAMPP
-    private static final String PASSWORD = ""; // Default password for XAMPP
-    private static final String DATABASE = "calouseif"; // Replace with your database name
-    private static final String HOST = "localhost:3306"; // Default host and port
+    
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = "";
+    private static final String DATABASE = "calouseif";
+    private static final String HOST = "localhost:3306";
     private static final String CONNECTION = String.format("jdbc:mysql://%s/%s", HOST, DATABASE);
 
-    // Static block to load the driver once
     static {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -22,7 +21,6 @@ public class DatabaseConnection {
         }
     }
 
-    // Method to get a new database connection
     public static Connection getConnection() {
         try {
             return DriverManager.getConnection(CONNECTION, USERNAME, PASSWORD);

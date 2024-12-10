@@ -1,162 +1,60 @@
 package controller;
 
 import model.Item;
-import util.DatabaseConnection;
+import model.ItemModel;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ItemController {
-	public static List<Item> getPendingItems() {
-        String query = "SELECT * FROM items WHERE status = 'pending'";
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
 
-            List<Item> items = new ArrayList<>();
-            while (resultSet.next()) {
-                items.add(new Item(
-                        resultSet.getInt("id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("category"),
-                        resultSet.getString("size"),
-                        resultSet.getDouble("price"),
-                        resultSet.getString("status"),
-                        resultSet.getInt("seller_id")
-                ));
-            }
-            return items;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+	public static List<Item> getApprovedItems() {
+        return ItemModel.getApprovedItems();
     }
 
-    public static boolean approveItem(int itemId) {
-        String query = "UPDATE items SET status = 'approved' WHERE id = ?";
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query)) {
-
-            statement.setInt(1, itemId);
-            return statement.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+    public static String uploadItem(String name, String category, String size, double price) {
+    	if (name.isEmpty() || name.length() < 3) {
+            return "Item name must be at least 3 characters long and cannot be empty.";
         }
+
+    	if (category.isEmpty() || category.length() < 3) {
+            return "Item category must be at least 3 characters long and cannot be empty.";
+        }
+    	
+    	if (size.isEmpty()) {
+            return "Item size cannot be empty.";
+        }
+    	
+    	if (price <= 0) {
+            return "Price must be a positive number and cannot be zero.";
+        }
+
+    	boolean isInserted = ItemModel.insertItem(name, category, size, price);
+    	return isInserted ? "Item uploaded successfully!" : "Failed to upload item.";
     }
 
-    public static boolean declineItem(int itemId, String reason) {
-        String query = "UPDATE items SET status = 'declined', decline_reason = ? WHERE id = ?";
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query)) {
-
-            statement.setString(1, reason);
-            statement.setInt(2, itemId);
-            return statement.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+    public static String deleteItem(int itemId) {
+        boolean isDeleted = ItemModel.deleteItem(itemId);
+        return isDeleted ? "Item deleted successfully!" : "Failed to delete item.";
     }
     
-    public static List<Item> getItems() {
-        List<Item> items = new ArrayList<>();
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM items";
-            PreparedStatement statement = connection.prepareStatement(query);
-
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                items.add(new Item(
-                        resultSet.getInt("id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("category"),
-                        resultSet.getString("size"),
-                        resultSet.getDouble("price"),
-                        resultSet.getString("status"),
-                        resultSet.getInt("seller_id")
-                ));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    public static String editItem(int itemId, String name, String category, String size, double price) {
+    	if (name.isEmpty() || name.length() < 3) {
+            return "Item name must be at least 3 characters long and cannot be empty.";
         }
-        return items;
-    }
-
-    public static boolean deleteItem(int itemId) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "DELETE FROM items WHERE id = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, itemId);
-
-            int rowsDeleted = statement.executeUpdate();
-            return rowsDeleted > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
+    	
+    	if (category.isEmpty() || category.length() < 3) {
+            return "Item category must be at least 3 characters long and cannot be empty.";
         }
-        return false;
-    }
-    
-    public static boolean uploadItem(String name, String category, String size, double price) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "INSERT INTO items (name, category, size, price, status) VALUES (?, ?, ?, ?, 'Pending')";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, name);
-            statement.setString(2, category);
-            statement.setString(3, size);
-            statement.setDouble(4, price);
-
-            int rowsInserted = statement.executeUpdate();
-            return rowsInserted > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
+    	
+    	if (size.isEmpty()) {
+            return "Item size cannot be empty.";
         }
-        return false;
-    }
-    
-    public static boolean purchaseItem(int itemId, int buyerId) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            // Update item status to 'Purchased' and associate it with the buyer
-            String query = "UPDATE items SET status = 'Purchased', buyer_id = ? WHERE id = ? AND status = 'Approved'";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, buyerId); // Buyer ID who purchased the item
-            statement.setInt(2, itemId); // Item ID to purchase
 
-            int rowsUpdated = statement.executeUpdate();
-            return rowsUpdated > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
+    	if (price <= 0) {
+            return "Price must be a positive number and cannot be zero.";
         }
-        return false;
+
+        boolean isUpdated = ItemModel.editItem(itemId, name, category, size, price);
+        return isUpdated ? "Item updated successfully!" : "Failed to update item.";
     }
-    
-    public static List<Item> getAvailableItems() {
-        List<Item> items = new ArrayList<>();
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            // Query to retrieve items with status 'Approved'
-            String query = "SELECT * FROM items WHERE status = 'Approved'";
-            PreparedStatement statement = connection.prepareStatement(query);
-
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                items.add(new Item(
-                        resultSet.getInt("id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("category"),
-                        resultSet.getString("size"),
-                        resultSet.getDouble("price"),
-                        resultSet.getString("status"),
-                        resultSet.getInt("seller_id")
-                ));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return items;
-    }
-
-
 }

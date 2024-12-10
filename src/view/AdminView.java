@@ -1,40 +1,35 @@
 package view;
 
-import controller.ItemController;
+import controller.AdminController;
 import model.Item;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 public class AdminView extends JFrame {
-    // UI Components
+	
+	private static final long serialVersionUID = 1L;
     private JTable tblPendingItems;
     private JButton btnApprove, btnDecline;
     private JLabel lblMessage;
     private JTextField txtReason;
 
-    // Constructor
     public AdminView() {
-        // Set up JFrame
         setTitle("Admin - Review Items");
         setSize(800, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Pending Items Table
         tblPendingItems = new JTable();
         JScrollPane tableScrollPane = new JScrollPane(tblPendingItems);
         tableScrollPane.setBorder(BorderFactory.createTitledBorder("Pending Items"));
         add(tableScrollPane, BorderLayout.CENTER);
 
-        // Message Label
         lblMessage = new JLabel("", SwingConstants.CENTER);
 
-        // Action Buttons and Reason Field
         JPanel actionPanel = new JPanel(new GridLayout(2, 1, 5, 5));
 
         JPanel reasonPanel = new JPanel(new FlowLayout());
@@ -47,6 +42,10 @@ public class AdminView extends JFrame {
         btnDecline = new JButton("Decline");
         buttonPanel.add(btnApprove);
         buttonPanel.add(btnDecline);
+        
+        JButton btnLogout = new JButton("Logout");
+        btnLogout.addActionListener(this::handleLogout);
+        buttonPanel.add(btnLogout);
 
         actionPanel.add(reasonPanel);
         actionPanel.add(buttonPanel);
@@ -54,30 +53,16 @@ public class AdminView extends JFrame {
         add(actionPanel, BorderLayout.SOUTH);
         add(lblMessage, BorderLayout.NORTH);
 
-        // Action Listeners
-        btnApprove.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleApprove();
-            }
-        });
+        btnApprove.addActionListener(this::handleApprove);
+        btnDecline.addActionListener(this::handleDecline);
 
-        btnDecline.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleDecline();
-            }
-        });
-
-        // Load Pending Items
         loadPendingItems();
 
         setVisible(true);
     }
 
-    // Load pending items into the table
     private void loadPendingItems() {
-        List<Item> pendingItems = ItemController.getPendingItems();
+        List<Item> pendingItems = AdminController.getPendingItems();
         if (pendingItems != null && !pendingItems.isEmpty()) {
             String[][] data = new String[pendingItems.size()][5];
             for (int i = 0; i < pendingItems.size(); i++) {
@@ -96,8 +81,7 @@ public class AdminView extends JFrame {
         }
     }
 
-    // Handle Approve
-    private void handleApprove() {
+    private void handleApprove(ActionEvent e) {
         int selectedRow = tblPendingItems.getSelectedRow();
         if (selectedRow == -1) {
             lblMessage.setText("Select an item to approve.");
@@ -105,21 +89,15 @@ public class AdminView extends JFrame {
             return;
         }
 
-        int itemId = Integer.parseInt((String) tblPendingItems.getValueAt(selectedRow, 0));
-        boolean isApproved = ItemController.approveItem(itemId);
+        int itemId = Integer.parseInt(tblPendingItems.getValueAt(selectedRow, 0).toString());
+        String result = AdminController.approveItem(itemId);
 
-        if (isApproved) {
-            lblMessage.setText("Item approved successfully!");
-            lblMessage.setForeground(Color.GREEN);
-            loadPendingItems();
-        } else {
-            lblMessage.setText("Failed to approve item.");
-            lblMessage.setForeground(Color.RED);
-        }
+        lblMessage.setText(result);
+        lblMessage.setForeground(result.contains("successfully") ? Color.GREEN : Color.RED);
+        loadPendingItems();
     }
 
-    // Handle Decline
-    private void handleDecline() {
+    private void handleDecline(ActionEvent e) {
         int selectedRow = tblPendingItems.getSelectedRow();
         if (selectedRow == -1) {
             lblMessage.setText("Select an item to decline.");
@@ -128,26 +106,19 @@ public class AdminView extends JFrame {
         }
 
         String reason = txtReason.getText().trim();
-        if (reason.isEmpty()) {
-            lblMessage.setText("Please provide a reason for declining the item.");
-            lblMessage.setForeground(Color.RED);
-            return;
-        }
+        String result = AdminController.declineItem(Integer.parseInt(tblPendingItems.getValueAt(selectedRow, 0).toString()), reason);
 
-        int itemId = Integer.parseInt((String) tblPendingItems.getValueAt(selectedRow, 0));
-        boolean isDeclined = ItemController.declineItem(itemId, reason);
-
-        if (isDeclined) {
-            lblMessage.setText("Item declined successfully!");
-            lblMessage.setForeground(Color.GREEN);
-            loadPendingItems();
-        } else {
-            lblMessage.setText("Failed to decline item.");
-            lblMessage.setForeground(Color.RED);
-        }
+        lblMessage.setText(result);
+        lblMessage.setForeground(result.contains("successfully") ? Color.GREEN : Color.RED);
+        loadPendingItems();
+    }
+    
+    private void handleLogout(ActionEvent e) {
+        new LoginView();
+        dispose();
     }
 
-    // Main method for testing
+
     public static void main(String[] args) {
         new AdminView();
     }

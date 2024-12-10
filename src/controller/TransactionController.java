@@ -1,87 +1,77 @@
 package controller;
 
+import model.TransactionModel;
+import model.Offer;
 import model.Transaction;
-import util.DatabaseConnection;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 
 public class TransactionController {
 
-    // Create a new transaction
-    public static boolean createTransaction(int userId, int itemId, double price, String status) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "INSERT INTO transactions (user_id, item_id, price, status, timestamp) VALUES (?, ?, ?, ?, NOW())";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, userId);
-            statement.setInt(2, itemId);
-            statement.setDouble(3, price);
-            statement.setString(4, status);
-
-            int rowsInserted = statement.executeUpdate();
-            return rowsInserted > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
+    public static String createTransaction(int userId, int itemId, double price, String status) {
+        if (userId <= 0 || itemId <= 0 || price <= 0) {
+            return "Invalid transaction details.";
         }
-        return false;
+
+        boolean isCreated = TransactionModel.createTransaction(userId, itemId, price, status);
+        return isCreated ? "Transaction created successfully!" : "Failed to create transaction.";
     }
 
-    // Retrieve a user's transaction history
     public static List<Transaction> getUserTransactions(int userId) {
-        List<Transaction> transactions = new ArrayList<>();
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM transactions WHERE user_id = ? ORDER BY timestamp DESC";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, userId);
-
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                transactions.add(new Transaction(
-                        resultSet.getInt("transaction_id"),
-                        resultSet.getInt("user_id"),
-                        resultSet.getInt("item_id"),
-                        resultSet.getDouble("price"),
-                        resultSet.getString("status"),
-                        resultSet.getTimestamp("timestamp").toLocalDateTime()
-                ));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (userId <= 0) {
+            return null;
         }
-        return transactions;
+        return TransactionModel.getUserTransactions(userId);
     }
 
-    // Update transaction status
-    public static boolean updateTransactionStatus(int transactionId, String newStatus) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "UPDATE transactions SET status = ? WHERE transaction_id = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, newStatus);
-            statement.setInt(2, transactionId);
-
-            int rowsUpdated = statement.executeUpdate();
-            return rowsUpdated > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
+    public static String updateTransactionStatus(int transactionId, String newStatus) {
+        if (transactionId <= 0 || newStatus == null || newStatus.isEmpty()) {
+            return "Invalid transaction status.";
         }
-        return false;
+
+        boolean isUpdated = TransactionModel.updateTransactionStatus(transactionId, newStatus);
+        return isUpdated ? "Transaction status updated successfully!" : "Failed to update transaction status.";
     }
 
-    // Delete a transaction
-    public static boolean deleteTransaction(int transactionId) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "DELETE FROM transactions WHERE transaction_id = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, transactionId);
-
-            int rowsDeleted = statement.executeUpdate();
-            return rowsDeleted > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
+    public static String deleteTransaction(int transactionId) {
+        if (transactionId <= 0) {
+            return "Invalid transaction ID.";
         }
-        return false;
+
+        boolean isDeleted = TransactionModel.deleteTransaction(transactionId);
+        return isDeleted ? "Transaction deleted successfully!" : "Failed to delete transaction.";
     }
+
+    public static double getHighestOffer(int itemId) {
+        return TransactionModel.getHighestOffer(itemId);
+    }
+    
+    public static String submitValidatedOffer(int userId, int itemId, double offerPrice) {
+        if (offerPrice <= 0) {
+            return "Offer price must be more than zero.";
+        }
+
+        double highestOffer = getHighestOffer(itemId);
+        if (offerPrice <= highestOffer) {
+            return "Offer price must be higher than the current highest offer.";
+        }
+
+        boolean isSubmitted = TransactionModel.submitOffer(userId, itemId, offerPrice);
+        return isSubmitted ? "Offer submitted successfully!" : "Failed to submit offer.";
+    }
+    
+    public static List<Offer> getOfferedItems() {
+        return TransactionModel.getOfferedItems();
+    }
+
+    public static String acceptOffer(int offerId) {
+        boolean isAccepted = TransactionModel.acceptOffer(offerId);
+        return isAccepted ? "Offer accepted successfully!" : "Failed to accept the offer.";
+    }
+    
+    public static String declineOffer(int offerId) {
+        boolean isDeclined = TransactionModel.declineOffer(offerId);
+        return isDeclined ? "Offer declined successfully!" : "Failed to decline the offer.";
+    }
+
 }
