@@ -1,15 +1,15 @@
 package model;
 
 public class User {
-    // Attributes
-    private int id; // Unique ID for the user
-    private String username; // User's username
-    private String password; // User's password
-    private String phoneNumber; // User's phone number
-    private String address; // User's address
-    private String role; // User's role (e.g., buyer, seller)
+    
+    private int id;
+    private String username;
+    private String password;
+    private String phoneNumber;
+    private String address;
+    private String role;
 
-    // Constructor
+    
     public User(int id, String username, String password, String phoneNumber, String address, String role) {
         this.id = id;
         this.username = username;
@@ -19,16 +19,6 @@ public class User {
         this.role = role;
     }
 
-    // Overloaded constructor (for creating a new user without ID)
-    public User(String username, String password, String phoneNumber, String address, String role) {
-        this.username = username;
-        this.password = password;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
-        this.role = role;
-    }
-
-    // Getters and Setters
     public int getId() {
         return id;
     }
@@ -77,17 +67,4 @@ public class User {
         this.role = role;
     }
 
-    // Method to display user info (optional)
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", address='" + address + '\'' +
-                ", role='" + role + '\'' +
-                '}';
-    }
-    
-    
 }

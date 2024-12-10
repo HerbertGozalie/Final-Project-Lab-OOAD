@@ -10,13 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ItemController {
-    public static List<Item> getPendingItems() {
-        List<Item> items = new ArrayList<>();
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM items WHERE status = 'Pending'";
-            PreparedStatement statement = connection.prepareStatement(query);
-            ResultSet resultSet = statement.executeQuery();
+	public static List<Item> getPendingItems() {
+        String query = "SELECT * FROM items WHERE status = 'pending'";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
 
+            List<Item> items = new ArrayList<>();
             while (resultSet.next()) {
                 items.add(new Item(
                         resultSet.getInt("id"),
@@ -28,39 +28,38 @@ public class ItemController {
                         resultSet.getInt("seller_id")
                 ));
             }
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
-        return items;
     }
 
     public static boolean approveItem(int itemId) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "UPDATE items SET status = 'Approved' WHERE id = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, itemId);
+        String query = "UPDATE items SET status = 'approved' WHERE id = ?";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
 
-            int rowsUpdated = statement.executeUpdate();
-            return rowsUpdated > 0;
+            statement.setInt(1, itemId);
+            return statement.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
     public static boolean declineItem(int itemId, String reason) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "UPDATE items SET status = 'Declined', decline_reason = ? WHERE id = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
+        String query = "UPDATE items SET status = 'declined', decline_reason = ? WHERE id = ?";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
             statement.setString(1, reason);
             statement.setInt(2, itemId);
-
-            int rowsUpdated = statement.executeUpdate();
-            return rowsUpdated > 0;
+            return statement.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
-        return false;
     }
     
     public static List<Item> getItems() {

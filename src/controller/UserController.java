@@ -1,123 +1,62 @@
 package controller;
 
 import model.User;
-import util.DatabaseConnection;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import model.UserModel;
 
 public class UserController {
 
-    // Authenticate user
-	public static String login(String username, String password) {
-        if (username.isEmpty() || password.isEmpty()) {
-            return "Username and password cannot be empty.";
+	public static User login(String username, String password) {
+	    if (username.isEmpty() || password.isEmpty()) {
+	        return null;
+	    }
+	    
+	    if (username.equals("admin") && password.equals("admin")) {
+	        return new User(0, "admin", "admin", null, null, "Admin");
+	    }
+
+	    return UserModel.authenticate(username, password);
+	}
+
+    public static String registerUser(String username, String password, String phoneNumber, String address, String role) {
+        if (username.isEmpty() || password.isEmpty() || phoneNumber.isEmpty() || address.isEmpty() || role == null) {
+            return "All fields are required.";
         }
 
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM users WHERE username = ? AND password = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, username);
-            statement.setString(2, password);
-
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                return "Login successful!";
-            } else {
-                return "Invalid username or password.";
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "An error occurred during login.";
+        if (username.length() < 3) {
+            return "Username must be at least 3 characters.";
         }
-    }
-
-    // Register a new user
-    public static boolean registerUser(String username, String password, String phoneNumber, String address, String role) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            // Check if username already exists
-            String checkQuery = "SELECT * FROM users WHERE username = ?";
-            PreparedStatement checkStatement = connection.prepareStatement(checkQuery);
-            checkStatement.setString(1, username);
-
-            ResultSet resultSet = checkStatement.executeQuery();
-            if (resultSet.next()) {
-                return false; // Username already exists
-            }
-
-            // Insert new user
-            String query = "INSERT INTO users (username, password, phone_number, address, role) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, username);
-            statement.setString(2, password); // Consider hashing the password in production
-            statement.setString(3, phoneNumber);
-            statement.setString(4, address);
-            statement.setString(5, role);
-
-            int rowsInserted = statement.executeUpdate();
-            return rowsInserted > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
+        
+        if (!UserModel.isUsernameUnique(username)) {
+            return "Username is already taken. Please choose another.";
         }
-        return false;
-    }
 
-    // Get user by username
-    public static User getUserByUsername(String username) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM users WHERE username = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, username);
-
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                return new User(
-                        resultSet.getInt("id"),
-                        resultSet.getString("username"),
-                        resultSet.getString("password"),
-                        resultSet.getString("phone_number"),
-                        resultSet.getString("address"),
-                        resultSet.getString("role")
-                );
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (password.length() < 8) {
+            return "Password must be at least 8 characters long.";
         }
-        return null;
-    }
-
-    // Update user details
-    public static boolean updateUser(User user) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "UPDATE users SET password = ?, phone_number = ?, address = ?, role = ? WHERE id = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, user.getPassword());
-            statement.setString(2, user.getPhoneNumber());
-            statement.setString(3, user.getAddress());
-            statement.setString(4, user.getRole());
-            statement.setInt(5, user.getId());
-
-            int rowsUpdated = statement.executeUpdate();
-            return rowsUpdated > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
+        
+        if (!password.matches(".*[!@#$%^&*].*")) {
+            return "Password must include at least one special character (!, @, #, $, %, ^, &, *).";
         }
-        return false;
-    }
 
-    // Delete user
-    public static boolean deleteUser(int userId) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "DELETE FROM users WHERE id = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, userId);
-
-            int rowsDeleted = statement.executeUpdate();
-            return rowsDeleted > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (!phoneNumber.matches("\\+62\\d{9,10}")) {
+            return "Phone number must start with +62 and be 10-11 digits long.";
         }
-        return false;
+        
+        if (address.isEmpty()) {
+            return "Address cannot be empty.";
+        }
+        
+        if (!role.equalsIgnoreCase("Buyer") && !role.equalsIgnoreCase("Seller")) {
+            return "Role must be either Buyer or Seller.";
+        }
+
+        User user = new User(0, username, password, phoneNumber, address, role);
+        boolean isRegistered = UserModel.insertUser(user);
+
+        if (isRegistered) {
+            return "Registration successful!";
+        }
+        
+        return "Registration failed. Please try again.";
     }
 }

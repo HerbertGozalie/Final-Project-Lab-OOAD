@@ -2,44 +2,33 @@ package util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DatabaseConnection {
     // Database credentials
-    private final String USERNAME = "root"; // Default username for XAMPP
-    private final String PASSWORD = ""; // Default password for XAMPP
-    private final String DATABASE = "calouseif"; // Replace with your database name
-    private final String HOST = "localhost:3306"; // Default host and port
-    private final String CONNECTION = String.format("jdbc:mysql://%s/%s", HOST, DATABASE);
-    private static Connection con;
+    private static final String USERNAME = "root"; // Default username for XAMPP
+    private static final String PASSWORD = ""; // Default password for XAMPP
+    private static final String DATABASE = "calouseif"; // Replace with your database name
+    private static final String HOST = "localhost:3306"; // Default host and port
+    private static final String CONNECTION = String.format("jdbc:mysql://%s/%s", HOST, DATABASE);
 
-    // Singleton instance
-    private static DatabaseConnection instance;
-
-    // Private constructor to prevent external instantiation
-    private DatabaseConnection() {
+    // Static block to load the driver once
+    static {
         try {
-            // Load MySQL JDBC driver
             Class.forName("com.mysql.cj.jdbc.Driver");
-            // Establish connection
-            con = DriverManager.getConnection(CONNECTION, USERNAME, PASSWORD);
-        } catch (Exception e) {
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
+            throw new RuntimeException("MySQL JDBC Driver not found!");
         }
     }
 
-    // Public method to get the singleton instance
-    public static DatabaseConnection getInstance() {
-        if (instance == null) {
-            instance = new DatabaseConnection();
-        }
-        return instance;
-    }
-
-    // Public method to get the connection object
+    // Method to get a new database connection
     public static Connection getConnection() {
-        if (con == null) {
-            getInstance(); // Initialize the singleton instance if not already initialized
+        try {
+            return DriverManager.getConnection(CONNECTION, USERNAME, PASSWORD);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to establish database connection!");
         }
-        return con;
     }
 }
