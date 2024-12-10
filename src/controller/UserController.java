@@ -10,7 +10,11 @@ import java.sql.ResultSet;
 public class UserController {
 
     // Authenticate user
-    public static boolean authenticate(String username, String password) {
+	public static String login(String username, String password) {
+        if (username.isEmpty() || password.isEmpty()) {
+            return "Username and password cannot be empty.";
+        }
+
         try (Connection connection = DatabaseConnection.getConnection()) {
             String query = "SELECT * FROM users WHERE username = ? AND password = ?";
             PreparedStatement statement = connection.prepareStatement(query);
@@ -18,11 +22,15 @@ public class UserController {
             statement.setString(2, password);
 
             ResultSet resultSet = statement.executeQuery();
-            return resultSet.next(); // Returns true if a matching user is found
+            if (resultSet.next()) {
+                return "Login successful!";
+            } else {
+                return "Invalid username or password.";
+            }
         } catch (Exception e) {
             e.printStackTrace();
+            return "An error occurred during login.";
         }
-        return false;
     }
 
     // Register a new user

@@ -3,8 +3,6 @@ package view;
 import controller.UserController;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class LoginView extends JFrame {
     // Components for the Login UI
@@ -47,45 +45,26 @@ public class LoginView extends JFrame {
         add(buttonPanel);
 
         // Add action listeners
-        btnLogin.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleLogin();
-            }
-        });
-
-        btnRegister.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Open the RegisterView (to be implemented)
-                JOptionPane.showMessageDialog(null, "Register page will open!");
-            }
-        });
+        btnLogin.addActionListener(e -> handleLogin());
+        btnRegister.addActionListener(e -> JOptionPane.showMessageDialog(null, "Register page will open!"));
 
         // Make the frame visible
         setVisible(true);
     }
 
-    // Method to handle login logic
+    // Method to handle login action
     private void handleLogin() {
         String username = txtUsername.getText().trim();
         String password = new String(txtPassword.getPassword()).trim();
 
-        if (username.isEmpty() || password.isEmpty()) {
-            lblMessage.setText("Username and password cannot be empty.");
-            lblMessage.setForeground(Color.RED);
-            return;
-        }
+        String message = UserController.login(username, password); // Controller handles logic and returns a message
+        lblMessage.setText(message);
 
-        // Call the UserController to validate login
-        boolean isAuthenticated = UserController.authenticate(username, password);
-
-        if (isAuthenticated) {
-            lblMessage.setText("Login successful!");
+        // Change message color based on success or failure
+        if (message.equals("Login successful!")) {
             lblMessage.setForeground(Color.GREEN);
-            // Redirect to the appropriate home page
+            // Redirect to another page if needed
         } else {
-            lblMessage.setText("Invalid username or password.");
             lblMessage.setForeground(Color.RED);
         }
     }
