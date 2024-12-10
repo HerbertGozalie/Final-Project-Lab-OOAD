@@ -1,12 +1,15 @@
 package model;
 
 public class Offer {
+	
+	// Attributes
     private int offerId;
     private String itemName;
     private String category;
     private double initialPrice;
     private double offerPrice;
 
+    // Constructor
     public Offer(int offerId, String itemName, String category, double initialPrice, double offerPrice) {
         this.offerId = offerId;
         this.itemName = itemName;
@@ -15,6 +18,7 @@ public class Offer {
         this.offerPrice = offerPrice;
     }
 
+    // Getter Setter
     public int getOfferId() {
         return offerId;
     }

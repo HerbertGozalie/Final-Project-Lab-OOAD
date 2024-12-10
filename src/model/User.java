@@ -2,6 +2,7 @@ package model;
 
 public class User {
     
+	// Attributes
     private int id;
     private String username;
     private String password;
@@ -9,7 +10,7 @@ public class User {
     private String address;
     private String role;
 
-    
+    // Constructor
     public User(int id, String username, String password, String phoneNumber, String address, String role) {
         this.id = id;
         this.username = username;
@@ -19,6 +20,8 @@ public class User {
         this.role = role;
     }
 
+    
+   // Getter Setter
     public int getId() {
         return id;
     }

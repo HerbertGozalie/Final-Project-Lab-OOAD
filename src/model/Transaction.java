@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public class Transaction {
     
+	// Attributes
     private int transactionId;
     private int userId;
     private int itemId;
@@ -11,6 +12,7 @@ public class Transaction {
     private String status;
     private LocalDateTime timestamp;
 
+    // Constructor
     public Transaction(int transactionId, int userId, int itemId, double price, String status, LocalDateTime timestamp) {
         this.transactionId = transactionId;
         this.userId = userId;
@@ -20,6 +22,7 @@ public class Transaction {
         this.timestamp = timestamp;
     }
 
+    // Getter Setter
     public int getTransactionId() {
         return transactionId;
     }

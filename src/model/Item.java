@@ -2,6 +2,7 @@ package model;
 
 public class Item {
     
+	// Attributes
     private int id;
     private String name;
     private String category;
@@ -10,6 +11,7 @@ public class Item {
     private String status;
     private int sellerId;
 
+    // Constructor
     public Item(int id, String name, String category, String size, double price, String status, int sellerId) {
         this.id = id;
         this.name = name;
@@ -20,6 +22,7 @@ public class Item {
         this.sellerId = sellerId;
     }
 
+    // Getter Setter
     public int getId() {
         return id;
     }
